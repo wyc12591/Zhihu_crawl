@@ -181,13 +181,75 @@ class Zhihu:
         fensi_list = self.driver.find_elements_by_xpath('//*[@class="List-item"]//*[@class="ContentItem-head"]')
         fensi_info_list = self.get_followers(fensi_list)
         data['粉丝'] = fensi_info_list
-        print(data)
 
-        # huida_button = self.driver.find_element_by_xpath('')
+        huida_button = self.driver.find_element_by_xpath('//main//a[contains(text(),"回答")]')
+        huida_button.click()
+
+        time.sleep(2)
+
+        huida_list = self.driver.find_elements_by_xpath('//*[@id="Profile-answers"]//div[@class="List-item"]')
+        huida_info_list = self.get_huida(huida_list)
+        data['回答'] = huida_info_list
+        print(data)
+        print(len(data['回答']))
+
+
+    def get_huida(self, huida_list):
+        huida_info_list = []
+        for huida in huida_list:
+            if len(huida_info_list) >= 10:
+                break
+            huida_detail = {}
+            huida_detail['问题'] = huida.find_element_by_xpath('.//h2[@class="ContentItem-title"]/div').text
+            yue_du_quan_wen = huida.find_element_by_xpath('.//*[@class="Button ContentItem-more Button--plain"]')
+            yue_du_quan_wen.click()
+            huida_detail['回答内容'] = huida.find_element_by_xpath('.//*[@class="RichText ztext CopyrightRichText-richText"]').text
+            # print(huida_detail['回答'])
+            huida_detail['回答时间'] = huida.find_element_by_xpath('.//div[@class="ContentItem-time"]//span').text
+            huida_detail['评论数'] = huida.find_element_by_xpath('.//button[contains(text(),"评论")]').text
+            huida_detail['点赞数'] = huida.find_element_by_xpath('.//button[@class="Button VoteButton VoteButton--up"]').text
+            huida_detail['评论'] = []
+
+            ping_lun_button = huida.find_element_by_xpath('.//button[contains(text(),"评论")]')
+            ping_lun_button.click()
+            time.sleep(3)
+            while True:
+                try:
+                    zhan_kai_ping_lun = huida.find_element_by_xpath('.//button[contains(text(),"展开其他")]')
+                    zhan_kai_ping_lun.click()
+                    time.sleep(1)
+                except:
+                    break
+
+            ping_lun_main_list = huida.find_elements_by_xpath('.//ul')
+            for ping_lun_zu in ping_lun_main_list:
+                ping_lun_list = ping_lun_zu.find_elements_by_xpath('.//li')
+                for single_ping_lun in ping_lun_list:
+                    single_ping_lun_detail = {}
+                    single_ping_lun_detail['评论人地址'] = single_ping_lun.find_element_by_xpath('.//span[@class="UserLink"][1]').get_attribute('href')
+                    single_ping_lun_detail['评论人昵称'] = single_ping_lun.find_element_by_xpath('.//span[@class="UserLink"][1]').text
+                    single_ping_lun_detail['评论时间'] = single_ping_lun.find_element_by_xpath('.//span[@class="CommentItemV2-time"]').text
+                    single_ping_lun_detail['评论内容'] = single_ping_lun.find_element_by_xpath('.//div[@class="CommentItemV2-metaSibling"]//div[@class="RichText ztext"]').text
+                    single_ping_lun_detail['点赞次数'] = single_ping_lun.find_element_by_xpath('.//button[@class="Button CommentItemV2-likeBtn Button--plain"]').text
+                    if single_ping_lun_detail['点赞次数'] == '赞':
+                        single_ping_lun_detail['点赞次数'] = '0'
+                    huida_detail['评论'].append(single_ping_lun_detail)
+            huida_info_list.append(huida_detail)
+            shou_qi_ping_lun_button = huida.find_element_by_xpath('.//button[contains(text(),"收起评论")]')
+            # self.driver.execute_script("arguments[0].scrollIntoView();", shou_qi_ping_lun_button)
+            # time.sleep(1)
+            # shou_qi_ping_lun_button.click()
+            action = ActionChains(self.driver)
+            action.move_to_element(shou_qi_ping_lun_button).click().perform()
+            time.sleep(1)
+        return huida_info_list
+
 
     def get_followers(self, people_list):
         people_info_list = []
         for guanzhu in people_list:
+            if len(people_info_list) >= 10:
+                break
             try:
                 people_info = {'昵称': guanzhu.find_element_by_xpath('.//a[@class="UserLink-link"]').text,
                                '链接地址': guanzhu.find_element_by_xpath('.//a[@class="UserLink-link"]').get_attribute('href')}
@@ -229,7 +291,7 @@ class Zhihu:
         #
         # print('自动登录成功')
 
-        self.userid = 'duo-duo-14-37-87'  # input('请输入用户id')
+        self.userid = 'shui-yue-95-77'  # input('请输入用户id')
         # while True:
         # self.get_image()
         # self.deal_with_image()
