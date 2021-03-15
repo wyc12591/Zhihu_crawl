@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 import time
 
@@ -190,9 +192,16 @@ class Zhihu:
         huida_list = self.driver.find_elements_by_xpath('//*[@id="Profile-answers"]//div[@class="List-item"]')
         huida_info_list = self.get_huida(huida_list)
         data['回答'] = huida_info_list
-        print(data)
-        print(len(data['回答']))
 
+        tiwen_button = self.driver.find_element_by_xpath('//div[@class="Profile-main"]//a[contains(text(),"提问")]')
+        action = ActionChains(self.driver)
+        action.move_to_element(tiwen_button).click().perform()
+        time.sleep(1)
+
+        tiwen_list = self.driver.find_elements_by_xpath('//div[@class="List-item"]')
+        tiwen_info_list = self.get_tiwen(tiwen_list)
+        data['提问'] = tiwen_info_list
+        return data
 
     def get_huida(self, huida_list):
         huida_info_list = []
@@ -203,11 +212,13 @@ class Zhihu:
             huida_detail['问题'] = huida.find_element_by_xpath('.//h2[@class="ContentItem-title"]/div').text
             yue_du_quan_wen = huida.find_element_by_xpath('.//*[@class="Button ContentItem-more Button--plain"]')
             yue_du_quan_wen.click()
-            huida_detail['回答内容'] = huida.find_element_by_xpath('.//*[@class="RichText ztext CopyrightRichText-richText"]').text
+            huida_detail['回答内容'] = huida.find_element_by_xpath(
+                './/*[@class="RichText ztext CopyrightRichText-richText"]').text
             # print(huida_detail['回答'])
             huida_detail['回答时间'] = huida.find_element_by_xpath('.//div[@class="ContentItem-time"]//span').text
             huida_detail['评论数'] = huida.find_element_by_xpath('.//button[contains(text(),"评论")]').text
-            huida_detail['点赞数'] = huida.find_element_by_xpath('.//button[@class="Button VoteButton VoteButton--up"]').text
+            huida_detail['点赞数'] = huida.find_element_by_xpath(
+                './/button[@class="Button VoteButton VoteButton--up"]').text
             huida_detail['评论'] = []
 
             ping_lun_button = huida.find_element_by_xpath('.//button[contains(text(),"评论")]')
@@ -225,12 +236,19 @@ class Zhihu:
             for ping_lun_zu in ping_lun_main_list:
                 ping_lun_list = ping_lun_zu.find_elements_by_xpath('.//li')
                 for single_ping_lun in ping_lun_list:
+                    if len(huida_detail['评论']) >= 10:
+                        break
                     single_ping_lun_detail = {}
-                    single_ping_lun_detail['评论人地址'] = single_ping_lun.find_element_by_xpath('.//span[@class="UserLink"][1]').get_attribute('href')
-                    single_ping_lun_detail['评论人昵称'] = single_ping_lun.find_element_by_xpath('.//span[@class="UserLink"][1]').text
-                    single_ping_lun_detail['评论时间'] = single_ping_lun.find_element_by_xpath('.//span[@class="CommentItemV2-time"]').text
-                    single_ping_lun_detail['评论内容'] = single_ping_lun.find_element_by_xpath('.//div[@class="CommentItemV2-metaSibling"]//div[@class="RichText ztext"]').text
-                    single_ping_lun_detail['点赞次数'] = single_ping_lun.find_element_by_xpath('.//button[@class="Button CommentItemV2-likeBtn Button--plain"]').text
+                    single_ping_lun_detail['评论人地址'] = single_ping_lun.find_element_by_xpath(
+                        './/span[@class="UserLink"][1]').get_attribute('href')
+                    single_ping_lun_detail['评论人昵称'] = single_ping_lun.find_element_by_xpath(
+                        './/span[@class="UserLink"][1]').text
+                    single_ping_lun_detail['评论时间'] = single_ping_lun.find_element_by_xpath(
+                        './/span[@class="CommentItemV2-time"]').text
+                    single_ping_lun_detail['评论内容'] = single_ping_lun.find_element_by_xpath(
+                        './/div[@class="CommentItemV2-metaSibling"]//div[@class="RichText ztext"]').text
+                    single_ping_lun_detail['点赞次数'] = single_ping_lun.find_element_by_xpath(
+                        './/button[@class="Button CommentItemV2-likeBtn Button--plain"]').text
                     if single_ping_lun_detail['点赞次数'] == '赞':
                         single_ping_lun_detail['点赞次数'] = '0'
                     huida_detail['评论'].append(single_ping_lun_detail)
@@ -244,7 +262,6 @@ class Zhihu:
             time.sleep(1)
         return huida_info_list
 
-
     def get_followers(self, people_list):
         people_info_list = []
         for guanzhu in people_list:
@@ -252,19 +269,23 @@ class Zhihu:
                 break
             try:
                 people_info = {'昵称': guanzhu.find_element_by_xpath('.//a[@class="UserLink-link"]').text,
-                               '链接地址': guanzhu.find_element_by_xpath('.//a[@class="UserLink-link"]').get_attribute('href')}
+                               '链接地址': guanzhu.find_element_by_xpath('.//a[@class="UserLink-link"]').get_attribute(
+                                   'href')}
             except:
                 people_info = {'昵称': '知乎用户（已注销）', '链接地址': '无'}
             try:
-                people_info['回答数'] = guanzhu.find_element_by_xpath('.//div[@class="ContentItem-status"]/span[contains(text(),"回答")]').text
+                people_info['回答数'] = guanzhu.find_element_by_xpath(
+                    './/div[@class="ContentItem-status"]/span[contains(text(),"回答")]').text
             except:
                 people_info['回答数'] = '无'
             try:
-                people_info['文章数'] = guanzhu.find_element_by_xpath('.//div[@class="ContentItem-status"]/span[contains(text(),"文章")]').text
+                people_info['文章数'] = guanzhu.find_element_by_xpath(
+                    './/div[@class="ContentItem-status"]/span[contains(text(),"文章")]').text
             except:
                 people_info['文章数'] = '无'
             try:
-                people_info['关注者数'] = guanzhu.find_element_by_xpath('.//div[@class="ContentItem-status"]/span[contains(text(),"关注")]').text
+                people_info['关注者数'] = guanzhu.find_element_by_xpath(
+                    './/div[@class="ContentItem-status"]/span[contains(text(),"关注")]').text
             except:
                 people_info['关注者数'] = '无'
             people_info_list.append(people_info)
@@ -303,10 +324,24 @@ class Zhihu:
         # self.k = self.k + 1
         # time.sleep(5)
         # get user_info
-        self.get_data(self.userid)
-        # parse
+        data = self.get_data(self.userid)
+        with open("result.json", "w", encoding='utf-8') as f:
+            f.write(json.dumps(data, ensure_ascii=False))  # parse
         # save
         # next
+
+    def get_tiwen(self, tiwen_list):
+        tiwen_info_list = []
+        for tiwen in tiwen_list:
+            if len(tiwen_info_list) >= 10:
+                break
+            tiwen_detail = {}
+            tiwen_detail['问题'] = tiwen.find_element_by_xpath('.//a').text
+            tiwen_detail['提问时间'] = tiwen.find_element_by_xpath('.//span[@class="ContentItem-statusItem"][1]').text
+            tiwen_detail['回答数'] = tiwen.find_element_by_xpath('.//span[@class="ContentItem-statusItem"][2]').text
+            tiwen_detail['关注数'] = tiwen.find_element_by_xpath('.//span[@class="ContentItem-statusItem"][3]').text
+            tiwen_info_list.append(tiwen_detail)
+        return tiwen_info_list
 
 
 if __name__ == '__main__':
