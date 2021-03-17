@@ -165,12 +165,13 @@ class Zhihu:
         except:
             basic_info['个人简介'] = '无'
 
-        print(basic_info)
+        # print(basic_info)
 
         data['基本属性信息'] = basic_info
         self.col.update_one({'用户id': userid}, {'$set': {"基本属性信息": basic_info}}, upsert=True)
+        print("基本属性信息爬取完毕")
 
-        print(data)
+        # print(data)
 
         social_info = {}
         follow_button = self.driver.find_element_by_xpath(
@@ -184,6 +185,7 @@ class Zhihu:
         guanzhu_info_list = self.get_followers(guanzhu_list)
         data['关注人'] = guanzhu_info_list
         self.col.update_one({'用户id': userid}, {"$set": {"关注人": guanzhu_info_list}}, upsert=True)
+        print("关注人爬取完毕")
 
         fensi_button = self.driver.find_element_by_xpath('//*[@id="Profile-following"]/div[@class="List-header"]//a[2]')
         fensi_button.click()
@@ -193,6 +195,7 @@ class Zhihu:
         fensi_info_list = self.get_followers(fensi_list)
         data['粉丝'] = fensi_info_list
         self.col.update_one({'用户id': userid}, {"$set": {"粉丝": fensi_info_list}}, upsert=True)
+        print("粉丝爬取完毕")
 
         huida_button = self.driver.find_element_by_xpath('//main//a[contains(text(),"回答")]')
         huida_button.click()
@@ -203,6 +206,7 @@ class Zhihu:
         huida_info_list = self.get_huida(huida_list)
         data['回答'] = huida_info_list
         self.col.update_one({'用户id': userid}, {"$set": {"回答": huida_info_list}}, upsert=True)
+        print("回答爬取完毕")
 
         tiwen_button = self.driver.find_element_by_xpath('//div[@class="Profile-main"]//a[contains(text(),"提问")]')
         action = ActionChains(self.driver)
@@ -213,6 +217,7 @@ class Zhihu:
         tiwen_info_list = self.get_tiwen(tiwen_list)
         data['提问'] = tiwen_info_list
         self.col.update_one({'用户id': userid}, {"$set": {"提问": tiwen_info_list}}, upsert=True)
+        print("提问爬取完毕")
         return data
 
     def get_huida(self, huida_list):
@@ -301,28 +306,28 @@ class Zhihu:
             except:
                 people_info['关注者数'] = '无'
             people_info_list.append(people_info)
-        print(len(people_info_list))
+        # print(len(people_info_list))
         return people_info_list
 
     def run(self):
-        # # url
-        # # driver
-        # # get
-        # self.driver.get(self.url)
-        #
-        # # login
-        # self.login()
-        # time.sleep(10)
-        # cookies_list = self.driver.get_cookies()
-        # cookies = {}
-        # for cookie in cookies_list:
-        #     cookies[cookie['name']] = cookie['value']
-        # json_cookies = json.dumps(cookies)
-        # with open("zhihu_cookies.txt", "w") as f:
-        #     f.write(json_cookies)
-        #     f.close()
-        #
-        # print('自动登录成功')
+        # url
+        # driver
+        # get
+        self.driver.get(self.url)
+
+        # login
+        self.login()
+        time.sleep(10)
+        cookies_list = self.driver.get_cookies()
+        cookies = {}
+        for cookie in cookies_list:
+            cookies[cookie['name']] = cookie['value']
+        json_cookies = json.dumps(cookies)
+        with open("zhihu_cookies.txt", "w") as f:
+            f.write(json_cookies)
+            f.close()
+
+        print('自动登录成功')
 
         self.userid = input('请输入用户id')
         self.col = self.db[self.userid]
