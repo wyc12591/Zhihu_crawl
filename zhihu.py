@@ -252,7 +252,7 @@ class Zhihu:
                         break
                     single_ping_lun_detail = {}
                     single_ping_lun_detail['评论人地址'] = single_ping_lun.find_element_by_xpath(
-                        './/span[@class="UserLink"][1]').get_attribute('href')
+                        './/span[@class="UserLink"][1]//a').get_attribute('href')
                     single_ping_lun_detail['评论人昵称'] = single_ping_lun.find_element_by_xpath(
                         './/span[@class="UserLink"][1]').text
                     single_ping_lun_detail['评论时间'] = single_ping_lun.find_element_by_xpath(
