@@ -5,6 +5,7 @@ import time
 
 import cv2
 import numpy as np
+import pymongo
 import requests
 from selenium import webdriver
 from selenium.webdriver import ActionChains
@@ -30,6 +31,10 @@ class Zhihu:
         # self.driver.implicitly_wait(1)
         self.k = 1
         self.userid = ''
+        self.client = pymongo.MongoClient("127.0.0.1", 27017)
+        self.db = self.client['zhihu_user_info']
+        self.col = None
+        # self.col.update_one({'用户id':self.userid}, {[1]:data})
 
     def login(self):
         use_pwd = self.driver.find_element_by_xpath(
@@ -102,6 +107,8 @@ class Zhihu:
         self.driver.get('https://www.zhihu.com/people/' + userid)
 
         data = {}
+        data['用户id'] = userid
+        self.col.update_one({'用户id': userid}, {'$set': {'用户id': userid}}, upsert=True)
 
         basic_info = {}
         nickname = self.driver.find_element_by_xpath(
@@ -161,6 +168,7 @@ class Zhihu:
         print(basic_info)
 
         data['基本属性信息'] = basic_info
+        self.col.update_one({'用户id': userid}, {'$set': {"基本属性信息": basic_info}}, upsert=True)
 
         print(data)
 
@@ -175,6 +183,7 @@ class Zhihu:
         guanzhu_list = self.driver.find_elements_by_xpath('//*[@class="List-item"]//*[@class="ContentItem-head"]')
         guanzhu_info_list = self.get_followers(guanzhu_list)
         data['关注人'] = guanzhu_info_list
+        self.col.update_one({'用户id': userid}, {"$set": {"关注人": guanzhu_info_list}}, upsert=True)
 
         fensi_button = self.driver.find_element_by_xpath('//*[@id="Profile-following"]/div[@class="List-header"]//a[2]')
         fensi_button.click()
@@ -183,15 +192,17 @@ class Zhihu:
         fensi_list = self.driver.find_elements_by_xpath('//*[@class="List-item"]//*[@class="ContentItem-head"]')
         fensi_info_list = self.get_followers(fensi_list)
         data['粉丝'] = fensi_info_list
+        self.col.update_one({'用户id': userid}, {"$set": {"粉丝": fensi_info_list}}, upsert=True)
 
         huida_button = self.driver.find_element_by_xpath('//main//a[contains(text(),"回答")]')
         huida_button.click()
 
-        time.sleep(2)
+        time.sleep(3)
 
         huida_list = self.driver.find_elements_by_xpath('//*[@id="Profile-answers"]//div[@class="List-item"]')
         huida_info_list = self.get_huida(huida_list)
         data['回答'] = huida_info_list
+        self.col.update_one({'用户id': userid}, {"$set": {"回答": huida_info_list}}, upsert=True)
 
         tiwen_button = self.driver.find_element_by_xpath('//div[@class="Profile-main"]//a[contains(text(),"提问")]')
         action = ActionChains(self.driver)
@@ -201,6 +212,7 @@ class Zhihu:
         tiwen_list = self.driver.find_elements_by_xpath('//div[@class="List-item"]')
         tiwen_info_list = self.get_tiwen(tiwen_list)
         data['提问'] = tiwen_info_list
+        self.col.update_one({'用户id': userid}, {"$set": {"提问": tiwen_info_list}}, upsert=True)
         return data
 
     def get_huida(self, huida_list):
@@ -312,7 +324,8 @@ class Zhihu:
         #
         # print('自动登录成功')
 
-        self.userid = 'shui-yue-95-77'  # input('请输入用户id')
+        self.userid = input('请输入用户id')
+        self.col = self.db[self.userid]
         # while True:
         # self.get_image()
         # self.deal_with_image()
@@ -324,10 +337,18 @@ class Zhihu:
         # self.k = self.k + 1
         # time.sleep(5)
         # get user_info
-        data = self.get_data(self.userid)
-        with open("result.json", "w", encoding='utf-8') as f:
-            f.write(json.dumps(data, ensure_ascii=False))  # parse
+        i = 0
+        while True:
+            data = self.get_data(self.userid)
+            with open("result.json", "w", encoding='utf-8') as f:
+                f.write(json.dumps(data, ensure_ascii=False))  # parse
+            i += 1
+            print("第%s次爬取数据成功" % i)
+            time.sleep(10)
         # save
+
+        # for user_info in col.find():
+        #     print(user_info)
         # next
 
     def get_tiwen(self, tiwen_list):
